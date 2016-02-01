@@ -1,0 +1,81 @@
+.cbo-form {
+  background: #dedede;
+  padding: 10px;
+}
+
+.form-item-cbo-check {
+  width: 10%;
+  display: inline-block;
+  float: left;
+  margin: 0;
+}
+
+.form-item-cbo-check-all {
+  margin: 0;
+}
+
+.form-item-cbo-check-all {
+  text-align: center;
+}
+
+.log-wrapper {
+  width: 40%;
+  display: inline-block;
+  float: left;
+}
+
+.form-actions {
+  width: 50%;
+  display: inline-block;
+  float: left;
+  text-align: right;
+  margin: 0;
+}
+
+.form-item-cbo-actions {
+  display: inline-block;
+  margin: 0;
+}
+
+.cbo-log {
+  text-align: center;
+}
+
+.cbo-msg {
+}
+
+.cbo-msg.warning {
+  color: #000;
+  background: #ff7e54;
+}
+
+.form-item-cbo-check label,
+.form-item-cbo-actions label {
+  display: none;
+}
+
+.cbo-form.affix-bottom {
+  position: relative;
+}
+
+.cbo-form.affix,
+.cbo-form.affix-top {
+  position: static;
+}
+
+@media (min-width: 979px) {
+  .cbo-form.affix-top {
+    position: static;
+    margin-top: 50px;
+  }
+
+  .cbo-form.affix {
+    position: fixed;
+    top: 50px;
+  }
+
+}
+
+.comment.cbo-selected {
+  background: #ffce4e;
+}

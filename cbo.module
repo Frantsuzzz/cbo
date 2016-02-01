@@ -1,0 +1,179 @@
+<?php
+// @see https://twitter.com/drupal_review/status/235380645134745601
+require_once 'cbo.form.inc';
+
+/**
+ * @file
+ * CBO module.
+ */
+
+/**
+ * Implements hook_permission().
+ */
+function cbo_permission() {
+  return array(
+    'cbo admin' => array(
+      'title' => t('Administer Comment Bulk Operations'),
+    ),
+    'cbo moderator' => array(
+      'title' => t('Moderator Administer Comment Bulk Operations'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function cbo_menu() {
+  // Administer menu.
+  $items['admin/config/content/cbo'] = array(
+    'title' => 'Comment Bulk Operations',
+    'description' => 'Configure Comment Bulk Operations.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cbo_settings_form'),
+    'access arguments' => array('cbo admin'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'cbo.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_node_view().
+ * Добавляем форму cbo для модератора
+ * @param $node
+ * @param $view_mode
+ * @param $langcode
+ */
+
+function cbo_node_view($node, $view_mode, $langcode) {
+  if ($view_mode != 'full') {
+    return;
+  }
+
+  $types = variable_get('cbo_node_types', array());
+  if (isset($types[$node->type]) && $types[$node->type]) {
+    if (!$node->comment || !cbo_perm_access($node)) {
+      return;
+    }
+
+    $node->content['cbo_moderate_form'] = drupal_get_form('cbo_moderate_form_' . $node->nid, $node);
+    $node->content['cbo_moderate_form']['#weight'] = 100;
+  }
+}
+
+/**
+ * Implements hook_comment_view().
+ * Добавим чекбокс для комментария
+ */
+function cbo_comment_view($comment, $view_mode, $langcode) {
+  if ($view_mode != 'full' || !cbo_perm_access($comment)) {
+    return;
+  }
+
+  $types = variable_get('cbo_node_types', array());
+  $type = str_replace('comment_node_', '', $comment->node_type); // comment_node_forum ->forum
+  if (isset($types[$type]) && $types[$type]) {
+    //if (!cbo_perm_access($node)) {
+    // return FALSE;
+    //}
+
+    $comment->content['cbo_check'] = array(
+      '#type' => 'checkbox',
+      '#title' => '',
+      '#return_value' => $comment->cid,
+      '#attributes' => array(
+        'class' => array(
+          'cbo-select',
+          'cbo-select-' . $comment->nid,
+        ),
+        'id' => 'edit-cbo-' . $comment->cid,
+        'name' => 'cbo-' . $comment->cid,
+        'data-nid' => $comment->nid,
+      ),
+      '#weight' => -100,
+    );
+
+  }
+}
+
+/**
+ * Дополнительная проверка доступа
+ * @param $entity ($node or $comment)
+ * @return bool
+ * TODO:
+ * Возможности для автора ноды
+ */
+function cbo_perm_access($entity) {
+  if (user_access('cbo admin') || user_access('cbo moderator')) {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+
+/**
+ * Получаем список доступных операций
+ */
+function cbo_actions_list() {
+
+  $actions = module_invoke_all('cbo_info');
+  drupal_alter('cbo_info', $actions);
+
+  return $actions;
+}
+
+
+/**
+ * Example hook_cbo_info()
+ *
+ */
+function cbo_cbo_info() {
+  $op['cbo_comment_publish'] = array(
+    'label' => t('Publish the selected comments'),
+    'callback' => 'cbo_comment_publish_multiple_callback',
+  );
+
+  $op['cbo_comment_unpublish'] = array(
+    'label' => t('Unpublish the selected comments'),
+    'callback' => 'cbo_comment_unpublish_multiple_callback',
+  );
+
+  $op['cbo_comment_delete'] = array(
+    'label' => t('Delete the selected comments'),
+    'callback' => 'cbo_comment_delete_multiple_callback',
+  );
+
+  return $op;
+}
+
+/**
+ * Удаляем пачку комментов
+ */
+function cbo_comment_delete_multiple_callback($cids) {
+  comment_delete_multiple($cids);
+}
+
+/**
+ * Публикуем пачку комментов
+ */
+function cbo_comment_publish_multiple_callback($cids) {
+  $comments = comment_load_multiple($cids);
+  foreach ($comments as $comment) {
+    $comment->status = COMMENT_PUBLISHED;
+    comment_save($comment);
+  }
+}
+
+/**
+ * Снимаем с публикации пачку комментов
+ */
+function cbo_comment_unpublish_multiple_callback($cids) {
+  $comments = comment_load_multiple($cids);
+  foreach ($comments as $comment) {
+    $comment->status = COMMENT_NOT_PUBLISHED;
+    comment_save($comment);
+  }
+}

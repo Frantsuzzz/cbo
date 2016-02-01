@@ -1,0 +1,14 @@
+<?php
+/**
+ * Implements hook_uninstall().
+ */
+function cbo_uninstall() {
+  $vars = array(
+    'cbo_node_types',
+    'cbo_batch_size',
+  );
+
+  foreach ($vars as $$var) {
+    variable_del($var);
+  }
+}

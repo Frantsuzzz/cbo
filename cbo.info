@@ -1,0 +1,7 @@
+name = Comment Bulk Operations
+description = For administrator.
+version = 7.x-1.0
+core = 7.x
+package = Moderation
+
+dependencies[] = comment
