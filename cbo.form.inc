@@ -11,7 +11,7 @@ function cbo_forms($form_id, $args) {
 
 function cbo_moderate_form($form, &$form_state, $node) {
 
-  $operations = cbo_actions_list();
+  $operations = cbo_actions_list(TRUE);
   $options = array('none' => t('- Select action -'));
   foreach ($operations as $key => $op) {
     $options[$key] = $op['label'];
@@ -99,7 +99,7 @@ function cbo_moderate_form($form, &$form_state, $node) {
 }
 
 function cbo_moderate_form_validate($form, &$form_state) {
-  $operations = cbo_actions_list();
+  $operations = cbo_actions_list(TRUE);
   if (!isset($operations[$form_state['values']['cbo_actions']])) {
     form_set_error('cbo_actions', t('Error @field', array('@field' => 'cbo_actions')));
   }

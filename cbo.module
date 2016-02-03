@@ -11,14 +11,27 @@ require_once 'cbo.form.inc';
  * Implements hook_permission().
  */
 function cbo_permission() {
-  return array(
+  $perms = array(
     'cbo admin' => array(
       'title' => t('Administer Comment Bulk Operations'),
     ),
     'cbo moderator' => array(
-      'title' => t('Moderator Administer Comment Bulk Operations'),
+      'title' => t('Moderator Comment Bulk Operations'),
     ),
   );
+
+  $operations = cbo_actions_list();
+
+  // Generate standard node permissions for all applicable node types.
+  foreach ($operations as $name => $op) {
+    $perms += array(
+      'cbo_perm_' . $name => array(
+        'title' => t('Access to the use of <em>"!name"</em>', array('!name' => $op['label'])),
+      )
+    );
+  }
+
+  return $perms;
 }
 
 /**
@@ -106,8 +119,12 @@ function cbo_comment_view($comment, $view_mode, $langcode) {
  * Возможности для автора ноды
  */
 function cbo_perm_access($entity) {
+
   if (user_access('cbo admin') || user_access('cbo moderator')) {
-    return TRUE;
+    $actions = cbo_actions_list(TRUE);
+    if(count($actions)){
+      return TRUE;
+    }
   }
 
   return FALSE;
@@ -117,11 +134,19 @@ function cbo_perm_access($entity) {
 /**
  * Получаем список доступных операций
  */
-function cbo_actions_list() {
+function cbo_actions_list($access = FALSE) {
 
   $actions = module_invoke_all('cbo_info');
   drupal_alter('cbo_info', $actions);
 
+  if ($access) {
+    //Проверка прав доступа на операции
+    foreach ($actions as $name => $op) {
+      if (!user_access('cbo_perm_' . $name)) {
+        unset($actions[$name]);
+      }
+    }
+  }
   return $actions;
 }
 
